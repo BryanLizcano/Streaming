@@ -30,14 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^3.3.1
-  nearby_connections: ^4.3.0 # Versión estable
-  record: ^6.2.0
-  just_audio: ^0.10.5
-  permission_handler: ^12.0.1
-  google_fonts: ^8.0.2
-  flutter_animate: ^4.5.0
-  uuid: ^4.4.0
+  flutter_p2p_connection: ^2.0.2 # Usando una versión que probablemente exista
+  flutter_pcm_sound: ^1.0.2
+  permission_handler: ^11.3.1
+  record: ^5.1.0
+  sound_stream: ^0.3.0 # La versión más común es 0.3.0
+  provider: ^6.1.1
 
 dev_dependencies:
   flutter_test:
