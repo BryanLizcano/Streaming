@@ -4,7 +4,7 @@ import '../viewmodel/wifi_viewmodel.dart';
 import 'chat_screen.dart';
 
 class DiscoveryScreen extends StatelessWidget {
-  const DiscoveryScreen({Key? key}) : super(key: key);
+  const DiscoveryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -5,7 +5,7 @@ import '../viewmodel/wifi_viewmodel.dart';
 import '../widgets/push_to_talk_button.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();

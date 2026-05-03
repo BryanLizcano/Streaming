@@ -4,7 +4,7 @@ import '../viewmodel/voice_viewmodel.dart';
 import '../viewmodel/wifi_viewmodel.dart';
 
 class PushToTalkButton extends StatelessWidget {
-  const PushToTalkButton({Key? key}) : super(key: key);
+  const PushToTalkButton({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -83,7 +83,7 @@ void main() async {
 }
 
 class P2pCommunicationApp extends StatelessWidget {
-  const P2pCommunicationApp({Key? key}) : super(key: key);
+  const P2pCommunicationApp({super.key});
 
   @override
   Widget build(BuildContext context) {
