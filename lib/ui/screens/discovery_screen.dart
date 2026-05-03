@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/wifi_viewmodel.dart';
+import '../../infrastructure/permissions/permission_service.dart';
 import 'chat_screen.dart';
 
-class DiscoveryScreen extends StatelessWidget {
+class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
+
+  @override
+  State<DiscoveryScreen> createState() => _DiscoveryScreenState();
+}
+
+class _DiscoveryScreenState extends State<DiscoveryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Solicitar permisos al arrancar (micrófono, ubicación, Wi-Fi cercano)
+    // Sin esto el audio nunca funcionará en Android
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PermissionService>().requestAllRequiredPermissions();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +33,13 @@ class DiscoveryScreen extends StatelessWidget {
               return IconButton(
                 icon: Icon(vm.isSearching ? Icons.stop : Icons.search),
                 onPressed: () {
-                  if (vm.isSearching) {
-                    // Aquí podrías implementar un stopDiscovery en el ViewModel
-                  } else {
+                  if (!vm.isSearching) {
                     vm.initializeAndDiscover();
                   }
                 },
               );
             },
-          )
+          ),
         ],
       ),
       body: Consumer<WifiViewModel>(
@@ -46,7 +60,6 @@ class DiscoveryScreen extends StatelessWidget {
                 subtitle: Text(peer.deviceAddress),
                 trailing: ElevatedButton(
                   onPressed: () async {
-                    // Conectar y navegar al chat
                     await vm.connect(peer);
                     if (context.mounted) {
                       Navigator.push(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/voice_viewmodel.dart';
 import '../viewmodel/wifi_viewmodel.dart';
+import '../viewmodel/chat_viewmodel.dart';
 
 class PushToTalkButton extends StatelessWidget {
   const PushToTalkButton({super.key});
@@ -10,16 +11,21 @@ class PushToTalkButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final voiceVM = context.watch<VoiceViewModel>();
     final wifiVM = context.read<WifiViewModel>();
+    final chatVM = context.read<ChatViewModel>();
 
-    // Obtenemos la IP de destino basada en la conexión actual
-    // Si eres Cliente, mandas a la IP del Group Owner.
-    // Si eres el Group Owner, deberías gestionar la IP del cliente (simplificado aquí)
-    final targetIp = wifiVM.currentConnection?.groupOwnerAddress ?? '192.168.49.1';
+    final isGroupOwner = wifiVM.currentConnection?.isGroupOwner ?? false;
+
+    // Determinar la IP de destino para el audio UDP:
+    //   - Si soy GO: envío al cliente → IP capturada cuando el cliente se conectó al servidor TCP
+    //   - Si soy Cliente: envío al GO → groupOwnerAddress (siempre 192.168.49.1 en Wi-Fi Direct)
+    final targetIp = isGroupOwner
+        ? (chatVM.peerIp ?? '192.168.49.2')
+        : (wifiVM.currentConnection?.groupOwnerAddress ?? '192.168.49.1');
 
     return GestureDetector(
-      onTapDown: (_) => voiceVM.startPushToTalk(targetIp), // Presiona
-      onTapUp: (_) => voiceVM.stopPushToTalk(),            // Suelta
-      onTapCancel: () => voiceVM.stopPushToTalk(),         // Cancela (ej. desliza el dedo)
+      onTapDown: (_) => voiceVM.startPushToTalk(targetIp),
+      onTapUp: (_) => voiceVM.stopPushToTalk(),
+      onTapCancel: () => voiceVM.stopPushToTalk(),
       child: Container(
         width: 80,
         height: 80,
@@ -32,7 +38,7 @@ class PushToTalkButton extends StatelessWidget {
                 color: Colors.redAccent,
                 blurRadius: 15,
                 spreadRadius: 5,
-              )
+              ),
           ],
         ),
         child: const Icon(
