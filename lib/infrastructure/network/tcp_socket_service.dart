@@ -49,6 +49,9 @@ class TcpSocketService implements NetworkRepository {
     if (_clientSocket != null) return;
     _peerIp = ip;
 
+    final cleanIp = ip.replaceAll('/', '');
+    _clientSocket = await Socket.connect(cleanIp, port);
+
     Exception? lastError;
     for (int attempt = 0; attempt < 5; attempt++) {
       try {

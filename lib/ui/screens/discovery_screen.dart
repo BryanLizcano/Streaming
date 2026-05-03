@@ -52,6 +52,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   void _onPeerTapped(PeerDevice device) async {
     final vm = context.read<WifiViewModel>();
 
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Intentando conectar con ${device.deviceName}..."))
+    );
+
     try {
       // 🟢 USAMOS TU MÉTODO 'connect' QUE RECIBE EL DISPOSITIVO
       await vm.connect(device);

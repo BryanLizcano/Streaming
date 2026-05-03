@@ -27,6 +27,6 @@ class PermissionService {
       }
     });
 
-    return allGranted;
+    return statuses.values.every((status) => status.isGranted);
   }
 }
