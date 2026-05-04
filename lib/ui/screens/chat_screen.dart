@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodel/chat_viewmodel.dart';
 import '../viewmodel/wifi_viewmodel.dart';
 import '../widgets/push_to_talk_button.dart';
+
 import 'discovery_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -63,15 +64,12 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () async {
-              // 1. Apagamos todo (Sockets y Sintonía Wi-Fi)
               await context.read<WifiViewModel>().disconnect();
-
               if (context.mounted) {
-                // 2. Regresamos a DiscoveryScreen borrando el rastro del chat
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const DiscoveryScreen()),
-                      (route) => false, // Esto evita que quede una pantalla negra detrás
+                      (route) => false,
                 );
               }
             },
@@ -80,14 +78,16 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Stack(
         children: [
-          // ── Contenido principal ──────────────────────────────────────
           Column(
             children: [
               Expanded(
                 child: chatVM.messages.isEmpty
                     ? const Center(
-                    child: Text('Aún no hay mensajes',
-                        style: TextStyle(color: Colors.grey)))
+                  child: Text(
+                    'Aún no hay mensajes',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
                     : ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(
@@ -106,15 +106,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.green[50],
+                            color: Colors.purple.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: Colors.green.shade200),
+                                color: Colors.purple.withOpacity(0.3)),
                           ),
-                          child: Text(msg,
-                              style: TextStyle(
-                                  color: Colors.green[800],
-                                  fontSize: 12)),
+                          child: Text(
+                            msg,
+                            style: TextStyle(
+                                color: Colors.purple[200], fontSize: 12),
+                          ),
                         ),
                       );
                     }
@@ -124,13 +125,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
                       child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 3),
+                        margin:
+                        const EdgeInsets.symmetric(vertical: 3),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: isMe
-                              ? Colors.blue[100]
-                              : Colors.grey[300],
+                              ? const Color(0xFF6C3FC4)
+                              : const Color(0xFF2A2A3A),
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(16),
                             topRight: const Radius.circular(16),
@@ -142,42 +144,61 @@ class _ChatScreenState extends State<ChatScreen> {
                                 : const Radius.circular(16),
                           ),
                         ),
-                        child: Text(msg),
+                        child: Text(
+                          msg,
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _textController,
-                        enabled: chatVM.isConnected,
-                        decoration: InputDecoration(
-                          hintText: _hintText(chatVM.status),
-                          border: const OutlineInputBorder(),
+              const Divider(height: 1, color: Color(0xFF2A2A3A)),
+              // ── FIX 1: SafeArea en el input para respetar la barra de navegación ──
+              // bottom: true → añade padding cuando hay botones físicos/virtuales.
+              // En dispositivos con gestos el padding es 0, así que no afecta.
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          enabled: chatVM.isConnected,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: _hintText(chatVM.status),
+                            hintStyle:
+                            const TextStyle(color: Color(0xFF6B6B8A)),
+                            filled: true,
+                            fillColor: const Color(0xFF1E1E2E),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onSubmitted: (_) => _sendText(),
                         ),
-                        onSubmitted: (_) => _sendText(),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: Colors.blue),
-                      onPressed: chatVM.isConnected ? _sendText : null,
-                    ),
-                    const SizedBox(width: 6),
-                    const PushToTalkButton(),
-                  ],
+                      const SizedBox(width: 6),
+                      IconButton(
+                        icon: const Icon(Icons.send,
+                            color: Color(0xFF9D6FE8)),
+                        onPressed: chatVM.isConnected ? _sendText : null,
+                      ),
+                      const SizedBox(width: 6),
+                      const PushToTalkButton(),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
 
-          // ── Overlay de carga / error ─────────────────────────────────
           if (!chatVM.isConnected)
             _ConnectingOverlay(status: chatVM.status),
         ],
@@ -193,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
   };
 }
 
-// ─── Badge de estado ──────────────────────────────────────────────────────────
+// ─── Badge de estado ───────────────────────────────────────────────────────────
 
 class _ConnectionBadge extends StatelessWidget {
   const _ConnectionBadge({required this.status});
@@ -205,7 +226,7 @@ class _ConnectionBadge extends StatelessWidget {
       ChatConnectionStatus.idle => (Colors.grey, 'Inactivo'),
       ChatConnectionStatus.connecting => (Colors.orange, 'Conectando…'),
       ChatConnectionStatus.waitingForPeer => (Colors.amber, 'Esperando par…'),
-      ChatConnectionStatus.connected => (Colors.green, 'Conectado'),
+      ChatConnectionStatus.connected => (const Color(0xFF9D6FE8), 'Conectado'),
       ChatConnectionStatus.failed => (Colors.red, 'Falló'),
     };
 
@@ -217,8 +238,8 @@ class _ConnectionBadge extends StatelessWidget {
           SizedBox(
             width: 10,
             height: 10,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: color),
+            child:
+            CircularProgressIndicator(strokeWidth: 2, color: color),
           )
         else
           Container(
@@ -229,14 +250,13 @@ class _ConnectionBadge extends StatelessWidget {
           ),
         const SizedBox(width: 4),
         Text(label,
-            style:
-            const TextStyle(fontSize: 12, color: Colors.white70)),
+            style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ],
     );
   }
 }
 
-// ─── Overlay semitransparente ─────────────────────────────────────────────────
+// ─── Overlay semitransparente ──────────────────────────────────────────────────
 
 class _ConnectingOverlay extends StatelessWidget {
   const _ConnectingOverlay({required this.status});
@@ -248,11 +268,12 @@ class _ConnectingOverlay extends StatelessWidget {
     final isWaiting = status == ChatConnectionStatus.waitingForPeer;
 
     return Container(
-      color: Colors.black54,
+      color: Colors.black.withOpacity(0.7),
       child: Center(
         child: Card(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: const Color(0xFF1E1E2E),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
           margin: const EdgeInsets.symmetric(horizontal: 40),
           child: Padding(
             padding:
@@ -265,7 +286,9 @@ class _ConnectingOverlay extends StatelessWidget {
                   const SizedBox(height: 20),
                   const Text('No se pudo conectar',
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold)),
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                   const SizedBox(height: 8),
                   const Text(
                     'Verifica que ambos dispositivos estén\ncerca e intenta de nuevo.',
@@ -282,7 +305,8 @@ class _ConnectingOverlay extends StatelessWidget {
                   const SizedBox(
                     width: 56,
                     height: 56,
-                    child: CircularProgressIndicator(strokeWidth: 5),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 5, color: Color(0xFF9D6FE8)),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -291,7 +315,9 @@ class _ConnectingOverlay extends StatelessWidget {
                         : 'Estableciendo conexión…',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.bold),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 8),
                   Text(

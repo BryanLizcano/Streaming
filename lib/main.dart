@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 // --- Dominio (Contratos) ---
@@ -25,14 +26,23 @@ import 'ui/viewmodel/voice_viewmodel.dart';
 import 'ui/viewmodel/wifi_viewmodel.dart';
 
 void main() async {
-  // Necesario para inicializar bindings nativos antes de correr la app (ej. Permisos, AudioTrack)
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Estilo de la barra de sistema: iconos claros sobre fondo oscuro
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF12121C),
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
 
   runApp(
     MultiProvider(
       providers: [
         // =====================================================================
-        // 1. CAPA DE INFRAESTRUCTURA (Repositorios y Servicios Core)
+        // 1. CAPA DE INFRAESTRUCTURA
         // =====================================================================
         Provider<WifiRepository>(create: (_) => WifiP2pService()),
         Provider<NetworkRepository>(create: (_) => TcpSocketService()),
@@ -41,14 +51,14 @@ void main() async {
         Provider<PermissionService>(create: (_) => PermissionService()),
 
         // =====================================================================
-        // 2. CAPA DE APLICACIÓN (Controladores / Lógica de Negocio)
+        // 2. CAPA DE APLICACIÓN
         // =====================================================================
-        // Inyectamos la infraestructura dentro de los controladores
         Provider<WifiController>(
           create: (context) => WifiController(context.read<WifiRepository>()),
         ),
         Provider<ChatController>(
-          create: (context) => ChatController(context.read<NetworkRepository>()),
+          create: (context) =>
+              ChatController(context.read<NetworkRepository>()),
         ),
         Provider<AudioController>(
           create: (context) => AudioController(
@@ -60,16 +70,13 @@ void main() async {
         // =====================================================================
         // 3. CAPA DE PRESENTACIÓN (ViewModels)
         // =====================================================================
-        // Inyectamos los controladores dentro de los ViewModels
         ChangeNotifierProvider<ChatViewModel>(
           create: (context) => ChatViewModel(context.read<ChatController>()),
         ),
         ChangeNotifierProvider<VoiceViewModel>(
-          create: (context) => VoiceViewModel(context.read<AudioController>()),
+          create: (context) =>
+              VoiceViewModel(context.read<AudioController>()),
         ),
-
-        // WifiViewModel necesita el WifiController para escanear, pero también
-        // necesita el ChatViewModel para iniciar los sockets cuando se conecta.
         ChangeNotifierProvider<WifiViewModel>(
           create: (context) => WifiViewModel(
             context.read<WifiController>(),
@@ -87,12 +94,107 @@ class P2pCommunicationApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIX 3: Tema oscuro/morado minimalista
+    // Paleta:
+    //   background  #12121C  (casi negro, tinte azul oscuro)
+    //   surface     #1E1E2E  (superficie elevada)
+    //   primary     #9D6FE8  (morado suave, no chillón)
+    //   secondary   #6C3FC4  (morado más profundo para burbujas propias)
+    //   onPrimary   blanco
+    //   outline     #2A2A3A  (divisores sutiles)
+    const Color bgColor = Color(0xFF12121C);
+    const Color surfaceColor = Color(0xFF1E1E2E);
+    const Color primaryColor = Color(0xFF9D6FE8);
+    const Color secondaryColor = Color(0xFF6C3FC4);
+
     return MaterialApp(
       title: 'P2P Comm Lab',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: const ColorScheme.dark(
+          background: bgColor,
+          surface: surfaceColor,
+          primary: primaryColor,
+          secondary: secondaryColor,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onBackground: Colors.white,
+          onSurface: Colors.white,
+          outline: Color(0xFF2A2A3A),
+          surfaceVariant: Color(0xFF2A2A3A),
+          onSurfaceVariant: Color(0xFFB0B0C8),
+        ),
+        scaffoldBackgroundColor: bgColor,
+
+        // AppBar limpio, sin sombra
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1A1A2A),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+
+        // ListTile
+        listTileTheme: const ListTileThemeData(
+          tileColor: Color(0xFF1E1E2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          contentPadding:
+          EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        ),
+
+        // Dividers
+        dividerTheme: const DividerThemeData(
+          color: Color(0xFF2A2A3A),
+          thickness: 1,
+        ),
+
+        // Cards
+        cardTheme: CardThemeData(
+          color: surfaceColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF2A2A3A)),
+          ),
+        ),
+
+        // ElevatedButton
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+
+        // SnackBar
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Color(0xFF2A1A4A),
+          contentTextStyle: TextStyle(color: Colors.white),
+          behavior: SnackBarBehavior.floating,
+        ),
+
+        // IconButton
+        iconTheme: const IconThemeData(color: primaryColor),
+
+        // CircularProgressIndicator
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: primaryColor,
+        ),
       ),
       home: const DiscoveryScreen(),
     );
