@@ -3,7 +3,11 @@ import 'dart:io';
 
 class PermissionService {
   Future<bool> requestAllRequiredPermissions() async {
-    Map<Permission, PermissionStatus> statuses = {};
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.location,
+      Permission.microphone,
+      Permission.nearbyWifiDevices, // Vital para Android 13+
+    ].request();
 
     if (Platform.isAndroid) {
       statuses = await [
@@ -27,6 +31,6 @@ class PermissionService {
       }
     });
 
-    return statuses.values.every((status) => status.isGranted);
+    return allGranted;
   }
 }

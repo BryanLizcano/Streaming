@@ -23,9 +23,9 @@ class PushToTalkButton extends StatelessWidget {
         : (wifiVM.currentConnection?.groupOwnerAddress ?? '192.168.49.1');
 
     return GestureDetector(
-      onTapDown: (_) => voiceVM.startPushToTalk(targetIp),
-      onTapUp: (_) => voiceVM.stopPushToTalk(),
-      onTapCancel: () => voiceVM.stopPushToTalk(),
+      onTapDown: (_) => voiceVM.startTalking(targetIp),
+      onTapUp: (_) => voiceVM.stopTalking(),
+      onTapCancel: () => voiceVM.stopTalking(),
       child: Container(
         width: 80,
         height: 80,

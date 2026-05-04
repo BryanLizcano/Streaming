@@ -6,30 +6,47 @@ import '../../infrastructure/audio/udp_audio_service.dart';
 class AudioController {
   final AudioRepository _audioRepository;
   final UdpAudioService _udpAudioService;
-  StreamSubscription? _recordingSub;
+
+  StreamSubscription? _recorderSubscription;
+  StreamSubscription? _receiverSubscription;
 
   AudioController(this._audioRepository, this._udpAudioService);
 
-  Future<void> initializeAudioSystem() async {
-    await _audioRepository.initialize();
-    await _udpAudioService.initUdpReceiver();
+  // 1. Inicialización: Prepara el altavoz y el receptor UDP
+  Future<void> initialize() async {
+    await _audioRepository.initialize(); // Inicializa PlayerStream
+    await _udpAudioService.init();       // Inicializa Socket UDP
 
-    // Conectar la recepción de red con la reproducción de hardware
-    _udpAudioService.audioStream.listen((chunk) {
+    // 🟢 CORRECCIÓN AQUÍ: Usamos .audioStream en lugar de .listen()
+    _receiverSubscription = _udpAudioService.audioStream.listen((List<int> chunk) {
       _audioRepository.playAudioChunk(chunk);
     });
   }
 
-  Future<void> startTransmission(String targetIp) async {
-    final stream = await _audioRepository.startRecordingStream();
+  // 2. Iniciar Walkie-Talkie (Al presionar el botón)
+  Future<void> startTalking(String remoteIp) async {
+    try {
+      final audioStream = await _audioRepository.startRecordingStream();
 
-    _recordingSub = stream.listen((Uint8List chunk) {
-      _udpAudioService.sendAudioBuffer(chunk, targetIp);
-    });
+      _recorderSubscription = audioStream.listen((Uint8List chunk) {
+        // Enviamos cada pedacito de voz a la IP remota
+        _udpAudioService.send(chunk, remoteIp);
+      });
+    } catch (e) {
+      print("Error al empezar a hablar: $e");
+    }
   }
 
-  Future<void> stopTransmission() async {
-    await _recordingSub?.cancel();
+  // 3. Detener Walkie-Talkie (Al soltar el botón)
+  Future<void> stopTalking() async {
+    await _recorderSubscription?.cancel();
     await _audioRepository.stopRecording();
+  }
+
+  // Limpieza total al salir de la app
+  void dispose() {
+    _recorderSubscription?.cancel();
+    _receiverSubscription?.cancel();
+    _udpAudioService.dispose();
   }
 }

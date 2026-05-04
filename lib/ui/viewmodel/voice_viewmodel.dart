@@ -4,39 +4,41 @@ import '../../application/audio/audio_controller.dart';
 class VoiceViewModel extends ChangeNotifier {
   final AudioController _audioController;
 
-  bool isTalking = false;
+  bool _isTalking = false;
+  bool get isTalking => _isTalking;
 
-  // Recibe el controlador por inyección de dependencias
   VoiceViewModel(this._audioController) {
-    _init();
+    // Inicializamos los servicios de audio en cuanto se crea el ViewModel
+    _initialize();
   }
 
-  Future<void> _init() async {
-    // El controlador se encarga de inicializar hardware y enlazar recepción UDP -> Parlante
-    await _audioController.initializeAudioSystem();
+  Future<void> _initialize() async {
+    await _audioController.initialize();
   }
 
-  // Se llama cuando el usuario MANTIENE PRESIONADO el botón de hablar
-  Future<void> startPushToTalk(String targetIpAddress) async {
-    isTalking = true;
-    notifyListeners();
+  // Se activa al mantener presionado el botón
+  Future<void> startTalking(String remoteIp) async {
+    if (_isTalking) return;
 
-    // El controlador maneja la captura del micrófono y el envío por UDP
-    await _audioController.startTransmission(targetIpAddress);
+    _isTalking = true;
+    notifyListeners(); // Notifica a la UI para que el botón cambie de color
+
+    await _audioController.startTalking(remoteIp);
   }
 
-  // Se llama cuando el usuario SUELTA el botón de hablar
-  Future<void> stopPushToTalk() async {
-    isTalking = false;
-    notifyListeners();
+  // Se activa al soltar el botón
+  Future<void> stopTalking() async {
+    if (!_isTalking) return;
 
-    // El controlador apaga el micrófono y cancela las suscripciones
-    await _audioController.stopTransmission();
+    _isTalking = false;
+    notifyListeners(); // Notifica a la UI para que el botón vuelva a la normalidad
+
+    await _audioController.stopTalking();
   }
 
   @override
   void dispose() {
-    _audioController.stopTransmission();
+    _audioController.dispose();
     super.dispose();
   }
 }

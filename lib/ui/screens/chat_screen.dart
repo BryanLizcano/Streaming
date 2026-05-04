@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodel/chat_viewmodel.dart';
 import '../viewmodel/wifi_viewmodel.dart';
 import '../widgets/push_to_talk_button.dart';
+import 'discovery_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -61,11 +62,20 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.exit_to_app),
-            onPressed: () {
-              wifiVM.disconnect();
-              Navigator.pop(context);
+            onPressed: () async {
+              // 1. Apagamos todo (Sockets y Sintonía Wi-Fi)
+              await context.read<WifiViewModel>().disconnect();
+
+              if (context.mounted) {
+                // 2. Regresamos a DiscoveryScreen borrando el rastro del chat
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DiscoveryScreen()),
+                      (route) => false, // Esto evita que quede una pantalla negra detrás
+                );
+              }
             },
-          ),
+          )
         ],
       ),
       body: Stack(

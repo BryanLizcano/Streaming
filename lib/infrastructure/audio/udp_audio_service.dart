@@ -2,28 +2,30 @@ import 'dart:io';
 import 'dart:async';
 
 class UdpAudioService {
-  RawDatagramSocket? _udpSocket;
-  final int audioPort = 50000;
+  RawDatagramSocket? _socket;
+  final int port = 50002;
 
-  // Se encarga de escuchar los bytes crudos y mandarlos al reproductor
   final _audioStreamController = StreamController<List<int>>.broadcast();
   Stream<List<int>> get audioStream => _audioStreamController.stream;
 
-  Future<void> initUdpReceiver() async {
-    _udpSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, audioPort);
-    _udpSocket!.listen((RawSocketEvent event) {
+  Future<void> init() async {
+    _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, port);
+    _socket!.listen((RawSocketEvent event) {
       if (event == RawSocketEvent.read) {
-        Datagram? datagram = _udpSocket!.receive();
-        if (datagram != null) {
-          _audioStreamController.add(datagram.data);
-        }
+        final dg = _socket!.receive();
+        if (dg != null) _audioStreamController.add(dg.data);
       }
     });
   }
 
-  void sendAudioBuffer(List<int> pcmData, String targetIp) {
-    if (_udpSocket != null) {
-      _udpSocket!.send(pcmData, InternetAddress(targetIp), audioPort);
-    }
+  void send(List<int> data, String targetIp) {
+    final cleanIp = targetIp.replaceAll('/', '');
+    _socket?.send(data, InternetAddress(cleanIp), port);
+  }
+
+  // 🟢 MÉTODO AGREGADO
+  void dispose() {
+    _socket?.close();
+    _audioStreamController.close();
   }
 }

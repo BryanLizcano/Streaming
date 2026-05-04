@@ -5,39 +5,33 @@ import 'package:sound_stream/sound_stream.dart';
 import '../../domain/repository/audio_repository.dart';
 
 class AudioService implements AudioRepository {
-  final AudioRecorder _audioRecorder = AudioRecorder();
-  final PlayerStream _playerStream = PlayerStream();
+  final AudioRecorder _recorder = AudioRecorder();
+  final PlayerStream _player = PlayerStream();
 
   @override
   Future<void> initialize() async {
-    // Inicializa el AudioTrack nativo de Android
-    await _playerStream.initialize();
+    // Es vital inicializar el reproductor antes de recibir nada
+    await _player.initialize();
+    await _player.start();
   }
 
   @override
   Future<Stream<Uint8List>> startRecordingStream() async {
-    // Configuramos PCM 16 bits (estándar para AudioRecord en Android)
-    // Usamos 16000 Hz para balancear calidad de voz y ancho de banda en UDP
-    final stream = await _audioRecorder.startStream(
-      const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
+    // Configuración exacta para Walkie-Talkie (Voz clara, poco peso)
+    const config = RecordConfig(
+      encoder: AudioEncoder.pcm16bits,
+      sampleRate: 16000,
+      numChannels: 1,
     );
-    return stream;
-  }
-
-  @override
-  Future<void> stopRecording() async {
-    await _audioRecorder.stop();
+    return await _recorder.startStream(config);
   }
 
   @override
   Future<void> playAudioChunk(List<int> chunk) async {
-    if (chunk.isNotEmpty) {
-      // Reproducir el fragmento PCM inmediatamente usando AudioTrack
-      _playerStream.writeChunk(Uint8List.fromList(chunk));
-    }
+    // Él inyecta los bytes directamente al reproductor
+    _player.writeChunk(Uint8List.fromList(chunk));
   }
+
+  @override
+  Future<void> stopRecording() async => await _recorder.stop();
 }
